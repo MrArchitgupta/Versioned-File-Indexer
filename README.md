@@ -1,4 +1,4 @@
-# CS253 Assignment 1: Memory-Efficient Versioned File Indexer
+# Memory-Efficient Versioned File Indexer
 
 ## Overview
 [cite_start]This program implements a memory-efficient versioned file indexer that processes large text files incrementally using a fixed-size buffer[cite: 7, 17]. [cite_start]It builds a case-insensitive, word-level frequency index without ever loading the entire file into memory[cite: 18, 20, 23, 25]. [cite_start]The system supports maintaining multiple file versions simultaneously and executing various analytical queries on them[cite: 37, 38, 40].
