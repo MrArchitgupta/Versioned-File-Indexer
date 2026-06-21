@@ -1,54 +1,86 @@
-# Memory-Efficient Versioned File Indexer
+# Memory Efficient Versioned File Indexer
 
 ## Overview
-[cite_start]This program implements a memory-efficient versioned file indexer that processes large text files incrementally using a fixed-size buffer[cite: 7, 17]. [cite_start]It builds a case-insensitive, word-level frequency index without ever loading the entire file into memory[cite: 18, 20, 23, 25]. [cite_start]The system supports maintaining multiple file versions simultaneously and executing various analytical queries on them[cite: 37, 38, 40].
 
-## System Architecture
-[cite_start]The solution is built using strong object-oriented design and consists of the following core classes[cite: 59, 62]:
-* [cite_start]**`BufferedFileReader`**: Handles reading the file incrementally in chunks specified by a strict buffer size (between 256 KB and 1024 KB)[cite: 54, 55, 63].
-* [cite_start]**`Tokenizer`**: Parses the raw character buffer into valid alphanumeric words, correctly handling tokens that span across buffer boundaries[cite: 19, 57, 64].
-* [cite_start]**`VersionedIndexer`**: Maps user-defined version names to their respective word frequency maps[cite: 36, 37, 65].
-* [cite_start]**`Query` Hierarchy**: An abstract base class with derived classes (`WordQuery`, `DiffQuery`, `TopKQuery`) to process specific user requests[cite: 66, 68].
+This program builds a word-level index for large text files while keeping memory usage low. Instead of loading the entire file into memory, the file is read in small chunks using a fixed-size buffer. Words are extracted from these chunks and their frequencies are stored in an index.
 
-## C++ Requirements Met
-* [cite_start]**Templates**: Utilizes a custom `freq_map<k, v>` template class for memory-efficient hash map encapsulation[cite: 72].
-* [cite_start]**Inheritance & Polymorphism**: Uses dynamic dispatch via the `Query` interface and its overridden `execute()` methods[cite: 68, 69].
-* [cite_start]**Function Overloading**: Implements overloaded versions of `buildSingleVersion()` to gracefully handle single-file and two-file indexing requirements[cite: 70].
-* [cite_start]**Exception Handling**: Uses `try/catch/throw` blocks to handle runtime errors, such as invalid buffer sizes or unreadable file paths[cite: 71].
+Each input file is treated as a separate **version**, which allows the program to compare different files or run queries on them.
+
+The program supports three types of queries:
+- Word frequency query
+- Difference query between two versions
+- Top-K most frequent words
+
+## Design
+
+The program is written using an object-oriented design where each class has a clear responsibility.
+
+**file_reader**  
+Handles reading the input file using a fixed-size buffer (between 256 KB and 1024 KB). It reads the file chunk by chunk.
+
+**Tokenizer**  
+Extracts words from the buffer. Words are considered sequences of alphanumeric characters. All characters are converted to lowercase so that word matching is case-insensitive.
+
+**freq_map (Template Class)**  
+Stores word frequencies using an `unordered_map`. It allows incrementing word counts and retrieving frequencies.
+
+**VersionedIndexer**  
+Maintains the frequency index for each version of the file. It is responsible for building the index and providing data for queries.
+
+**Query Classes**  
+An abstract base class `Query` is used with three derived classes:
+- `Wordquery`
+- `Diffquery`
+- `Topkquery`
+
+This allows different queries to be executed using runtime polymorphism.
+
+## File Processing
+
+The file is processed incrementally using the buffer:
+
+1. A chunk of the file is read into the buffer.
+2. The tokenizer scans the chunk and extracts words.
+3. Word frequencies are updated in the index.
+4. The process repeats until the whole file has been processed.
+
+Since only a fixed-size buffer is used, memory usage does not depend on the size of the file.
 
 ## Compilation
-Use a standard C++ compiler (like `g++`) to compile the source code. [cite_start]Note that per the assignment instructions, the C++ source file is named with a `.c` extension[cite: 104, 105].
 
-```bash
-g++ -O3 -std=c++14 -o analyzer rollnumber_firstname.c
+Compile the program using:
 
-Usage Examples
-The program is executed via the command line. Below are examples for the three supported query types:
-+1
+g++ -O2 230186_archit.cpp -o analyzer
 
-1. Word Count Query (Single File) Returns the frequency of a specific word in a version.
-+2
+## Usage
 
-Bash
-./analyzer --file dataset_v1.txt --version v1 \
---buffer 512 --query word --word error
-2. Top-K Query (Single File) Displays the top 'K' most frequent words in a version, sorted in descending order.
-+2
+### Word Query
 
-Bash
-./analyzer --file dataset_v1.txt --version v1 \
---buffer 512 --query top --top 10
-3. Difference Query (Two Files) Computes the frequency difference of a word between two distinct versions.
-+2
+./analyzer --file test_logs.txt --version v1 --buffer 256 --query word --word error
 
-Bash
-./analyzer --file1 dataset_v1.txt --version1 v1 \
---file2 dataset_v2.txt --version2 v2 \
---buffer 512 --query diff --word error
+### Top-K Query
 
-***
+./analyzer --file test_logs.txt --version v1 --buffer 256 --query top --top 10
 
-**One quick formatting note for your final ZIP file:**
-The assignment document asks for `rollnumber firstname.md` (with a space instead of an underscore) in one bullet point [cite: 106], but standardizes `rollnumber_firstname` everywhere else[cite: 102, 104, 107, 108]. It is highly likely the space is a typo in the document. I recommend naming it `rollnumber_firstname.md` to match the rest of your files, but you might want to double-check with your professor or TA just to be 100% safe.
+### Difference Query
 
-Would you like some help structuring the contents of the `rollnumber_firstname.pdf` assignment report next?
+./analyzer --file1 test_logs.txt --version1 v1 --file2 verbose_logs.txt --version2 v2 --buffer 256 --query diff --word request
+
+Note: you can change the buffer size and the word. In above commands I used 256.
+
+## Features
+- Processes files using a fixed-size buffer (256–1024 KB)
+- Case-insensitive word indexing
+- Supports multiple file versions
+- Efficient Top-K query using a priority queue
+- Demonstrates C++ templates, inheritance, polymorphism, and exception handling
+
+## Assumptions
+
+- Words consist of alphanumeric characters.
+- Word matching is case-insensitive.
+- Memory usage depends only on the number of unique words, not the size of the file.
+
+## Conclusion
+
+This program shows how large files can be processed efficiently without loading them fully into memory. By reading the file in chunks and using a modular design, the system builds a word index that is both memory-efficient and easy to extend.
